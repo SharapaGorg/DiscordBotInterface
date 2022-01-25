@@ -55,7 +55,6 @@ export default {
       method: "getBotUser",
       options: {},
     });
-    console.log(this.user);
 
   },
 };

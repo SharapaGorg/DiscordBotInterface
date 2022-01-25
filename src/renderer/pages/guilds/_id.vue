@@ -1,11 +1,20 @@
 <template>
   <div class="root">
     <div class="channels-list">
+      <router-link to="/guildsList">
+        <div class="backTap">
+          <span>
+              <-- К списку серверов
+          </span>
+        </div>
+      </router-link>
+
       <div
         class="channel"
         :style="{
           background: currentTextChannel === channel.id ? '#5865F2' : '#36393f',
-          color : currentTextChannel === channel.id ? '#dcddde' : '#8e9297'
+          color: currentTextChannel === channel.id ? '#dcddde' : '#8e9297',
+          paddingLeft : channel.type !== 'GUILD_CATEGORY' ? '30px' : '15px'
         }"
         v-for="channel in channelsList"
         :key="channel.id"
@@ -13,10 +22,11 @@
       >
         <h2>{{ channel.name }} [{{ channel.type.split("_")[1] }}]</h2>
       </div>
+
     </div>
     <div>
       <div class="messages" ref="messages">
-        <div ref='content'>
+        <div ref="content">
           <div
             v-for="message in currentMessages"
             :key="message.id"
@@ -51,6 +61,7 @@ export default {
       message: "",
       currentTextChannel: "",
       currentMessages: [],
+      refresher: null
     };
   },
   methods: {
@@ -63,6 +74,8 @@ export default {
         this.textChannel = true;
         this.currentTextChannel = channel.id;
 
+        // clearInterval(this.refresher);
+        // this.refresher = setInterval(async () => {
         const messages = await this.$axios.$post(api, {
           method: "getMessagesFromChannel",
           options: {
@@ -70,7 +83,8 @@ export default {
           },
         });
         this.currentMessages = messages.reverse();
-        console.log(this.currentMessages[0])
+
+        // }, 1000)
 
         this.$nextTick(() => {
           this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
@@ -87,8 +101,20 @@ export default {
       });
       this.message = "";
     },
+    upgradableBubbleSort(arr, value) {
+      for (let i = 0, endI = arr.length - 1; i < endI; i++) {
+        for (let j = 0, endJ = endI - i; j < endJ; j++) {
+          if (arr[j][value] > arr[j + 1][value]) {
+            let swap = arr[j];
+            arr[j] = arr[j + 1];
+            arr[j + 1] = swap;
+          }
+        }
+      }
+      return arr;
+    }
   },
-  // GUILD_CATEGORY GUILD_TEXT GUILD_VOICE - types of channels
+// GUILD_CATEGORY GUILD_TEXT GUILD_VOICE - types of channels
   async mounted() {
     // get channels id in current guild
     this.guild = await this.$axios.$post(api, {
@@ -108,10 +134,20 @@ export default {
         },
       });
 
-      if (channel["type"] !== "GUILD_CATEGORY") {
+      if (channel.type !== 'GUILD_CATEGORY') {
         this.channelsList.push(channel);
       }
     }
+    this.upgradableBubbleSort(this.channelsList, 'rawPosition');
+
+    clearInterval(this.refresher);
+    // constant check for new messages using messageCreate event at backend (node.js)
+    this.refresher = setInterval(async () => {
+      let newMessages = await this.$axios.$post(api, {
+        method: 'getNewMessages',
+        options: {}
+      })
+    }, 500)
   },
-};
+}
 </script>
