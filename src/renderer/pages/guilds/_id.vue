@@ -32,7 +32,7 @@
             :key="message.id"
             class="message"
           >
-            <h3>{{ message.authorId }}</h3>
+            <h3>{{ message['authorId'] }}</h3>
             <span v-html="$md.render(message.content)"></span>
           </div>
         </div>
@@ -61,7 +61,8 @@ export default {
       message: "",
       currentTextChannel: "",
       currentMessages: [],
-      refresher: null
+      refresher: null,
+      allMessages : {}
     };
   },
   methods: {
@@ -74,17 +75,7 @@ export default {
         this.textChannel = true;
         this.currentTextChannel = channel.id;
 
-        // clearInterval(this.refresher);
-        // this.refresher = setInterval(async () => {
-        const messages = await this.$axios.$post(api, {
-          method: "getMessagesFromChannel",
-          options: {
-            id: channel.id,
-          },
-        });
-        this.currentMessages = messages.reverse();
-
-        // }, 1000)
+        this.currentMessages = this.allMessages[channel.id].reverse();
 
         this.$nextTick(() => {
           this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
@@ -99,6 +90,11 @@ export default {
           message: this.message,
         },
       });
+      // this.allMessages[this.currentTextChannel].push({
+      //   content : this.message,
+      //   authorId : localStorage.getItem('discordToken')
+      // });
+
       this.message = "";
     },
     upgradableBubbleSort(arr, value) {
@@ -115,7 +111,7 @@ export default {
     }
   },
 // GUILD_CATEGORY GUILD_TEXT GUILD_VOICE - types of channels
-  async mounted() {
+  mounted: async function () {
     // get channels id in current guild
     this.guild = await this.$axios.$post(api, {
       method: "getServer",
@@ -135,11 +131,24 @@ export default {
       });
 
       if (channel.type !== 'GUILD_CATEGORY') {
+        // render channel
         this.channelsList.push(channel);
+        // get current messages from current channel
+        if (channel.type === 'GUILD_TEXT') {
+          let currentMessages = await this.$axios.$post(api, {
+            method: 'getMessagesFromChannel',
+            options: {
+              id: channel.id
+            }
+          });
+
+          this.allMessages[channel.id] = currentMessages;
+        }
       }
     }
     this.upgradableBubbleSort(this.channelsList, 'rawPosition');
 
+    // clear previous refresher
     clearInterval(this.refresher);
     // constant check for new messages using messageCreate event at backend (node.js)
     this.refresher = setInterval(async () => {
@@ -147,7 +156,16 @@ export default {
         method: 'getNewMessages',
         options: {}
       })
-    }, 500)
+
+      for (let newMessage of newMessages) {
+        if (!this.allMessages[newMessages['channelId']]) {
+          this.allMessages[newMessages['channelId']] = [];
+        }
+
+        this.allMessages[newMessage['channelId']].push(newMessage);
+      }
+
+    }, 500);
   },
 }
 </script>
