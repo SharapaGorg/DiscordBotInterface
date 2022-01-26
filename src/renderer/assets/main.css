@@ -18,6 +18,11 @@ p {
   display : inline-block;
 }
 
+a {
+  color : #00AFF4;
+  word-break: break-word;
+}
+
 *::-webkit-scrollbar {
     width : 0 !important;
 }
@@ -109,7 +114,7 @@ p {
 
 /*guild */
 
-.backTap {
+.actionButton {
   padding : 10px;
   text-align : left;
   border-radius: 10px;
@@ -118,6 +123,7 @@ p {
   margin : 10px;
   color : #48F0FE;
   text-decoration: none;
+  cursor : pointer;
 }
 
 .channels-list {
@@ -135,13 +141,18 @@ p {
     cursor: pointer;
     /* color : #dcddde; */
     color : #8e9297;
-    padding: 10px;
     text-align : left;
+    margin : 0;
+}
+
+.channel p {
+  margin : 8px;
 }
 
 .channel:hover {
     background: #5865F2;
 }
+
 
 .author {
     color : #dcddde;

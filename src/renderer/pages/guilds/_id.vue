@@ -2,7 +2,7 @@
   <div class="root">
     <div class="channels-list">
       <router-link to="/guildsList">
-        <div class="backTap">
+        <div class="actionButton">
           <span>
               <-- К списку серверов
           </span>
@@ -20,13 +20,18 @@
         :key="channel.id"
         @click="selectChannel(channel)"
       >
-        <h2>{{ channel.name }} [{{ channel.type.split("_")[1] }}]</h2>
+        <span v-html="$md.render(channel.name + ' [' + channel.type.split('_')[1] + ']')" class="channel-title"></span>
       </div>
 
     </div>
     <div>
       <div class="messages" ref="messages">
         <div ref="content">
+          <div class="actionButton" style="margin-left : auto; margin-right : auto" v-show="currentTextChannel"
+               @click="extendMessages">
+            Еще 10 сообщений
+          </div>
+
           <div
             v-for="message in currentMessages"
             :key="message.id"
@@ -38,7 +43,8 @@
               <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">BOT</p>
             </span>
 
-<!--            <span v-html="$md.render(message.content)" class="message-content"></span>-->
+            <span v-html="$md.render(message.content)" class="message-content"></span>
+<!--            <span>{{ message }}</span>-->
           </div>
         </div>
       </div>
@@ -55,8 +61,6 @@
 </template>
 
 <script>
-import Pages from "../index";
-
 const api = "http://localhost:4000/api";
 
 export default {
@@ -70,7 +74,7 @@ export default {
       currentMessages: [],
       refresher: null,
       allMessages: {},
-      guildUsers: {}
+      guildUsers: {},
     };
   },
   methods: {
@@ -81,26 +85,45 @@ export default {
       }
       if (channel.type === "GUILD_TEXT") {
         this.textChannel = true;
-        this.currentTextChannel = channel.id;
 
         this.currentMessages = this.allMessages[channel.id];
         if (typeof this.currentMessages !== 'string') {
-          this.currentMessages = this.currentMessages.reverse();
-        }
-        else {
+          if (this.currentTextChannel !== channel.id) {
+            this.currentMessages = this.currentMessages.reverse();
+          }
+        } else {
           this.currentMessages = [{
-            authorId : '0000',
-            content : 'Access denied'
+            authorId: '0000',
+            content: 'Access denied'
           }];
         }
 
         this.$nextTick(() => {
-            this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
+          this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
         });
+
+        this.currentTextChannel = channel.id;
       }
     },
     getUserInfo(id) {
-        return this.guildUsers[id] ? this.guildUsers[id] : {'tag' : 'ACCESS DENIED # 0000'}
+      return this.guildUsers[id] ? this.guildUsers[id] : {'tag': 'ACCESS DENIED # 0000'}
+    },
+    async extendMessages() {
+      const currentLimit = this.allMessages[this.currentTextChannel].length;
+
+      // get more messages
+      let messages = await this.$axios.$post(api, {
+        method : 'getMessagesFromChannel',
+        options : {
+          id : this.currentTextChannel,
+          limit : currentLimit + 10
+        }
+      })
+
+      messages = messages.reverse();
+
+      this.allMessages[this.currentTextChannel] = messages;
+      this.currentMessages = messages;
     },
     async sendMessage() {
       await this.$axios.$post(api, {
@@ -171,7 +194,8 @@ export default {
           let currentMessages = await this.$axios.$post(api, {
             method: 'getMessagesFromChannel',
             options: {
-              id: channel.id
+              id: channel.id,
+              limit: 10
             }
           });
 
