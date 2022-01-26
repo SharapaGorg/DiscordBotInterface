@@ -32,8 +32,13 @@
             :key="message.id"
             class="message"
           >
-            <h3>{{ message['authorId'] }}</h3>
-            <span v-html="$md.render(message.content)"></span>
+            <span class="author">
+              [{{ getUserInfo(message['authorId'])['tag'] }}]
+              : {{ message['authorId'] }}
+              <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">BOT</p>
+            </span>
+
+<!--            <span v-html="$md.render(message.content)" class="message-content"></span>-->
           </div>
         </div>
       </div>
@@ -50,6 +55,8 @@
 </template>
 
 <script>
+import Pages from "../index";
+
 const api = "http://localhost:4000/api";
 
 export default {
@@ -62,7 +69,8 @@ export default {
       currentTextChannel: "",
       currentMessages: [],
       refresher: null,
-      allMessages : {}
+      allMessages: {},
+      guildUsers: {}
     };
   },
   methods: {
@@ -75,12 +83,24 @@ export default {
         this.textChannel = true;
         this.currentTextChannel = channel.id;
 
-        this.currentMessages = this.allMessages[channel.id].reverse();
+        this.currentMessages = this.allMessages[channel.id];
+        if (typeof this.currentMessages !== 'string') {
+          this.currentMessages = this.currentMessages.reverse();
+        }
+        else {
+          this.currentMessages = [{
+            authorId : '0000',
+            content : 'Access denied'
+          }];
+        }
 
         this.$nextTick(() => {
-          this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
+            this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
         });
       }
+    },
+    getUserInfo(id) {
+        return this.guildUsers[id] ? this.guildUsers[id] : {'tag' : 'ACCESS DENIED # 0000'}
     },
     async sendMessage() {
       await this.$axios.$post(api, {
@@ -90,12 +110,17 @@ export default {
           message: this.message,
         },
       });
-      // this.allMessages[this.currentTextChannel].push({
-      //   content : this.message,
-      //   authorId : localStorage.getItem('discordToken')
-      // });
 
       this.message = "";
+    },
+    async getUser(id) {
+      const userInfo = await this.$axios.post(api, {
+        method: 'getUser',
+        options: {
+          id: id
+        }
+      })
+      return userInfo.data
     },
     upgradableBubbleSort(arr, value) {
       for (let i = 0, endI = arr.length - 1; i < endI; i++) {
@@ -119,6 +144,14 @@ export default {
         id: this.$route.params.id,
       },
     });
+
+    // get all user in current guild
+    const guildMembers = this.guild.members;
+    for (const memberID of guildMembers) {
+      const memberInfo = await this.getUser(memberID);
+      this.guildUsers[memberID] = memberInfo;
+    }
+
 
     const guildChannels = this.guild.channels;
 

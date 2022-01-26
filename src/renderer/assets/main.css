@@ -14,6 +14,10 @@ a {
   text-decoration: none !important;
 }
 
+p {
+  display : inline-block;
+}
+
 *::-webkit-scrollbar {
     width : 0 !important;
 }
@@ -139,9 +143,9 @@ a {
     background: #5865F2;
 }
 
-h3 {
+.author {
     color : #dcddde;
-    font-size : 20px !important; 
+    font-size : 20px !important;
 }
 
 h2 {
@@ -184,18 +188,24 @@ h2 {
     overflow-y : scroll;
     overflow-x: auto;
     color: #48F0FE;
-    padding-left : 15px;
-    padding-right : 15px;
-    padding-bottom : 100px;
-    padding-top : 15px;
+    padding: 15px 15px 100px;
 }
 
-.messages span {
-    white-space: pre;
-    word-break: break-all;
+.message-content {
+    display: block;
+    /*white-space: pre;*/
+    /*word-break: break-all;*/
     width : calc(100% - 30px);
 }
 
 .message {
 
+}
+
+.bot {
+  background : #5865F2;
+  padding: 2px 8px;
+  color : white;
+  border-radius: 10px;
+  margin : 0 !important;
 }
