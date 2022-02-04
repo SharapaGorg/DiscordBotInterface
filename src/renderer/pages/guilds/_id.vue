@@ -20,7 +20,8 @@
         :key="channel.id"
         @click="selectChannel(channel)"
       >
-        <span v-html="$md.render(channel.name + ' [' + channel.type.split('_')[1] + ']')" class="channel-title"></span>
+
+          <p v-html="channel.name + ' [' + channel.type.split('_')[1] + ']'"></p>
       </div>
 
     </div>
@@ -44,6 +45,7 @@
             </span>
 
             <span v-html="$md.render(message.content)" class="message-content"></span>
+<!--            <img :src="'https://cdn.discordapp.com/attachments/' + currentTextChannel +'/' + message.id + '/unknown.png'"/>-->
 <!--            <span>{{ message }}</span>-->
           </div>
         </div>
