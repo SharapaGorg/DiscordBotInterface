@@ -8,6 +8,12 @@
       </router-link>
 
       <div
+        @click="exitChannel"
+        class='actionButton'>
+        Отключиться от канала
+      </div>
+
+      <div
         class="channel"
         :style="{
           background: currentTextChannel === channel.id ? '#5865F2' : '#36393f',
@@ -39,8 +45,8 @@
             class="message"
           >
             <span class="author">
-              [{{ getUserInfo(message["authorId"])["tag"] }}] :
-              {{ message["authorId"] }}
+              [{{ getUserInfo(message.authorId).tag }}] :
+              {{ message.authorId }}
               <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">
                 BOT
               </p>
@@ -85,62 +91,71 @@ export default {
     };
   },
   methods: {
+    async apiRequest(method, options) {
+      const request = await this.$axios.$post(api, {
+        method: method,
+        options: options
+      })
+
+      return request
+    },
     async selectChannel(channel) {
-      if (channel.type === "GUILD_VOICE") {
-        this.textChannel = false;
-        // this.currentTextChannel = "";
+      switch (channel.type) {
+        case 'GUILD_VOICE':
+          this.textChannel = false;
 
-        console.log('JOIN CHANNEL', channel.id, channel.name)
+          await this.apiRequest("joinChannel", {
+            id: channel.id
+          })
+          break
 
-        const connection = await this.$axios.$post(api, {
-          method : "joinChannel",
-          options: {
-            id : channel.id
-          }
-        });
+        case 'GUILD_TEXT':
+          this.textChannel = true;
+          this.currentMessages = this.allMessages[channel.id];
 
-        console.log(connection)
-      }
-      if (channel.type === "GUILD_TEXT") {
-        this.textChannel = true;
-
-        this.currentMessages = this.allMessages[channel.id];
-        if (typeof this.currentMessages !== "string") {
           if (this.currentTextChannel !== channel.id) {
             this.currentMessages = this.currentMessages.reverse();
           }
-        } else {
-          this.currentMessages = [
-            {
-              authorId: "0000",
-              content: "Access denied",
-            },
-          ];
-        }
 
-        this.$nextTick(() => {
-          this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
-        });
+          if (typeof this.currentMessages === "string") {
+            this.currentMessages = [
+              {
+                authorId: "0000",
+                content: "Access denied",
+              }
+            ];
+          }
 
-        this.currentTextChannel = channel.id;
+          this.$nextTick(() => {
+            this.$refs.messages.scrollTop = this.$refs.content.clientHeight;
+          });
+
+          this.currentTextChannel = channel.id;
+
+          break
+
+        default:
+          break
       }
+    },
+    async exitChannel() {
+      await this.apiRequest('exitChannel', {
+        guildId: this.guild.id
+      })
     },
     getUserInfo(id) {
       return this.guildUsers[id]
         ? this.guildUsers[id]
-        : { tag: "ACCESS DENIED # 0000" };
+        : {tag: "ACCESS DENIED # 0000"};
     },
     async extendMessages() {
       const currentLimit = this.allMessages[this.currentTextChannel].length;
 
       // get more messages
-      let messages = await this.$axios.$post(api, {
-        method: "getMessagesFromChannel",
-        options: {
-          id: this.currentTextChannel,
-          limit: currentLimit + 10,
-        },
-      });
+      let messages = await this.apiRequest('getMessagesFromChannel', {
+        id: this.currentTextChannel,
+        limit: currentLimit + 10
+      })
 
       messages = messages.reverse();
 
@@ -148,24 +163,33 @@ export default {
       this.currentMessages = messages;
     },
     async sendMessage() {
-      await this.$axios.$post(api, {
-        method: "sendMessage",
-        options: {
-          chatId: this.currentTextChannel,
-          message: this.message,
-        },
-      });
+      await this.apiRequest("sendMessage", {
+        chatId: this.currentTextChannel,
+        message: this.message
+      })
 
       this.message = "";
     },
-    async getUser(id) {
-      const userInfo = await this.$axios.post(api, {
-        method: "getUser",
-        options: {
-          id: id,
-        },
-      });
+    async _getUser(id) {
+      const userInfo = await this.apiRequest("getUser", {
+        id: id
+      })
+
       return userInfo.data;
+    },
+    async _getChannel(id) {
+      const channel = await this.apiRequest("getChannel", {
+        id: id
+      })
+
+      return channel
+    },
+    async _getGuild(id) {
+      const guild = await this.apiRequest("getServer", {
+        id: id
+      })
+
+      return guild
     },
     upgradableBubbleSort(arr, value) {
       for (let i = 0, endI = arr.length - 1; i < endI; i++) {
@@ -182,46 +206,34 @@ export default {
   },
   // GUILD_CATEGORY GUILD_TEXT GUILD_VOICE - types of channels
   mounted: async function () {
-    // get channels id in current guild
-    this.guild = await this.$axios.$post(api, {
-      method: "getServer",
-      options: {
-        id: this.$route.params.id,
-      },
-    });
+    this.guild = await this._getGuild(this.$route.params.id)
 
     // get all user in current guild
     const guildMembers = this.guild.members;
+
     for (const memberID of guildMembers) {
-      const memberInfo = await this.getUser(memberID);
+      const memberInfo = await this._getUser(memberID);
       this.guildUsers[memberID] = memberInfo;
     }
 
     const guildChannels = this.guild.channels;
 
     for (let i = 0; i < guildChannels.length; i++) {
-      const channel = await this.$axios.$post(api, {
-        method: "getChannel",
-        options: {
-          id: guildChannels[i],
-        },
-      });
+      const channel = await this._getChannel(guildChannels[i])
 
-      if (channel.type !== "GUILD_CATEGORY") {
-        // render channel
-        this.channelsList.push(channel);
-        // get current messages from current channel
-        if (channel.type === "GUILD_TEXT") {
-          let currentMessages = await this.$axios.$post(api, {
-            method: "getMessagesFromChannel",
-            options: {
-              id: channel.id,
-              limit: 10,
-            },
-          });
+      if (channel.type === 'GUILD_CATEGORY') {
+        continue
+      }
 
-          this.allMessages[channel.id] = currentMessages;
-        }
+      // render channel
+      this.channelsList.push(channel);
+
+      // get current messages from current channel
+      if (channel.type === "GUILD_TEXT") {
+        this.allMessages[channel.id] = await this.apiRequest("getMessagesFromChannel", {
+          id: channel.id,
+          limit: 10
+        });
       }
     }
     this.upgradableBubbleSort(this.channelsList, "rawPosition");
