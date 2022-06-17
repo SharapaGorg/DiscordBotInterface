@@ -3,9 +3,7 @@
     <div class="channels-list">
       <router-link to="/guildsList">
         <div class="actionButton">
-          <span>
-              <-- К списку серверов
-          </span>
+          <span> <-- К списку серверов </span>
         </div>
       </router-link>
 
@@ -14,22 +12,24 @@
         :style="{
           background: currentTextChannel === channel.id ? '#5865F2' : '#36393f',
           color: currentTextChannel === channel.id ? '#dcddde' : '#8e9297',
-          paddingLeft : channel.type !== 'GUILD_CATEGORY' ? '30px' : '15px'
+          paddingLeft: channel.type !== 'GUILD_CATEGORY' ? '30px' : '15px',
         }"
         v-for="channel in channelsList"
         :key="channel.id"
         @click="selectChannel(channel)"
       >
-
-          <p v-html="channel.name + ' [' + channel.type.split('_')[1] + ']'"></p>
+        <p v-html="channel.name + ' [' + channel.type.split('_')[1] + ']'"></p>
       </div>
-
     </div>
     <div>
       <div class="messages" ref="messages">
         <div ref="content">
-          <div class="actionButton" style="margin-left : auto; margin-right : auto" v-show="currentTextChannel"
-               @click="extendMessages">
+          <div
+            class="actionButton"
+            style="margin-left: auto; margin-right: auto"
+            v-show="currentTextChannel"
+            @click="extendMessages"
+          >
             Еще 10 сообщений
           </div>
 
@@ -39,14 +39,19 @@
             class="message"
           >
             <span class="author">
-              [{{ getUserInfo(message['authorId'])['tag'] }}]
-              : {{ message['authorId'] }}
-              <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">BOT</p>
+              [{{ getUserInfo(message["authorId"])["tag"] }}] :
+              {{ message["authorId"] }}
+              <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">
+                BOT
+              </p>
             </span>
 
-            <span v-html="$md.render(message.content)" class="message-content"></span>
-<!--            <img :src="'https://cdn.discordapp.com/attachments/' + currentTextChannel +'/' + message.id + '/unknown.png'"/>-->
-<!--            <span>{{ message }}</span>-->
+            <span
+              v-html="$md.render(message.content)"
+              class="message-content"
+            ></span>
+            <!--            <img :src="'https://cdn.discordapp.com/attachments/' + currentTextChannel +'/' + message.id + '/unknown.png'"/>-->
+            <!--            <span>{{ message }}</span>-->
           </div>
         </div>
       </div>
@@ -83,21 +88,34 @@ export default {
     async selectChannel(channel) {
       if (channel.type === "GUILD_VOICE") {
         this.textChannel = false;
-        this.currentTextChannel = "";
+        // this.currentTextChannel = "";
+
+        console.log('JOIN CHANNEL', channel.id, channel.name)
+
+        const connection = await this.$axios.$post(api, {
+          method : "joinChannel",
+          options: {
+            id : channel.id
+          }
+        });
+
+        console.log(connection)
       }
       if (channel.type === "GUILD_TEXT") {
         this.textChannel = true;
 
         this.currentMessages = this.allMessages[channel.id];
-        if (typeof this.currentMessages !== 'string') {
+        if (typeof this.currentMessages !== "string") {
           if (this.currentTextChannel !== channel.id) {
             this.currentMessages = this.currentMessages.reverse();
           }
         } else {
-          this.currentMessages = [{
-            authorId: '0000',
-            content: 'Access denied'
-          }];
+          this.currentMessages = [
+            {
+              authorId: "0000",
+              content: "Access denied",
+            },
+          ];
         }
 
         this.$nextTick(() => {
@@ -108,19 +126,21 @@ export default {
       }
     },
     getUserInfo(id) {
-      return this.guildUsers[id] ? this.guildUsers[id] : {'tag': 'ACCESS DENIED # 0000'}
+      return this.guildUsers[id]
+        ? this.guildUsers[id]
+        : { tag: "ACCESS DENIED # 0000" };
     },
     async extendMessages() {
       const currentLimit = this.allMessages[this.currentTextChannel].length;
 
       // get more messages
       let messages = await this.$axios.$post(api, {
-        method : 'getMessagesFromChannel',
-        options : {
-          id : this.currentTextChannel,
-          limit : currentLimit + 10
-        }
-      })
+        method: "getMessagesFromChannel",
+        options: {
+          id: this.currentTextChannel,
+          limit: currentLimit + 10,
+        },
+      });
 
       messages = messages.reverse();
 
@@ -140,12 +160,12 @@ export default {
     },
     async getUser(id) {
       const userInfo = await this.$axios.post(api, {
-        method: 'getUser',
+        method: "getUser",
         options: {
-          id: id
-        }
-      })
-      return userInfo.data
+          id: id,
+        },
+      });
+      return userInfo.data;
     },
     upgradableBubbleSort(arr, value) {
       for (let i = 0, endI = arr.length - 1; i < endI; i++) {
@@ -158,9 +178,9 @@ export default {
         }
       }
       return arr;
-    }
+    },
   },
-// GUILD_CATEGORY GUILD_TEXT GUILD_VOICE - types of channels
+  // GUILD_CATEGORY GUILD_TEXT GUILD_VOICE - types of channels
   mounted: async function () {
     // get channels id in current guild
     this.guild = await this.$axios.$post(api, {
@@ -177,7 +197,6 @@ export default {
       this.guildUsers[memberID] = memberInfo;
     }
 
-
     const guildChannels = this.guild.channels;
 
     for (let i = 0; i < guildChannels.length; i++) {
@@ -188,43 +207,42 @@ export default {
         },
       });
 
-      if (channel.type !== 'GUILD_CATEGORY') {
+      if (channel.type !== "GUILD_CATEGORY") {
         // render channel
         this.channelsList.push(channel);
         // get current messages from current channel
-        if (channel.type === 'GUILD_TEXT') {
+        if (channel.type === "GUILD_TEXT") {
           let currentMessages = await this.$axios.$post(api, {
-            method: 'getMessagesFromChannel',
+            method: "getMessagesFromChannel",
             options: {
               id: channel.id,
-              limit: 10
-            }
+              limit: 10,
+            },
           });
 
           this.allMessages[channel.id] = currentMessages;
         }
       }
     }
-    this.upgradableBubbleSort(this.channelsList, 'rawPosition');
+    this.upgradableBubbleSort(this.channelsList, "rawPosition");
 
     // clear previous refresher
     clearInterval(this.refresher);
     // constant check for new messages using messageCreate event at backend (node.js)
     this.refresher = setInterval(async () => {
       let newMessages = await this.$axios.$post(api, {
-        method: 'getNewMessages',
-        options: {}
-      })
+        method: "getNewMessages",
+        options: {},
+      });
 
       for (let newMessage of newMessages) {
-        if (!this.allMessages[newMessages['channelId']]) {
-          this.allMessages[newMessages['channelId']] = [];
+        if (!this.allMessages[newMessages["channelId"]]) {
+          this.allMessages[newMessages["channelId"]] = [];
         }
 
-        this.allMessages[newMessage['channelId']].push(newMessage);
+        this.allMessages[newMessage["channelId"]].push(newMessage);
       }
-
     }, 500);
   },
-}
+};
 </script>
