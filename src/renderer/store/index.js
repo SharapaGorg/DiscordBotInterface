@@ -1,11 +1,14 @@
 import createPersistedState from "vuex-persistedstate";
 
 export const state = () => ({
-  api : 'http://localhost:4000/api'
+  api : 'http://localhost:4000/api',
+  user : {}
 })
 
 export const mutations = {
-
+  setUser(state, user) {
+    state.user = user
+  },
 }
 
 

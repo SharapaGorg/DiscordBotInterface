@@ -8,15 +8,9 @@
       </router-link>
 
       <div
-        @click="exitChannel"
-        class='actionButton'>
-        Отключиться от канала
-      </div>
-
-      <div
         class="channel"
         :style="{
-          background: currentTextChannel === channel.id ? '#5865F2' : '#36393f',
+          background: currentTextChannel === channel.id ? '#5865F2' : '#2f3136',
           color: currentTextChannel === channel.id ? '#dcddde' : '#8e9297',
           paddingLeft: channel.type !== 'GUILD_CATEGORY' ? '30px' : '15px',
         }"
@@ -25,6 +19,10 @@
         @click="selectChannel(channel)"
       >
         <p v-html="channel.name + ' [' + channel.type.split('_')[1] + ']'"></p>
+        <img
+          :src="getUser().displayAvatarURL" alt="" class="avatar"
+          v-show="currentVoiceChannel === channel.id"
+        />
       </div>
     </div>
     <div>
@@ -70,6 +68,22 @@
         <div class="sent-message"></div>
       </div>
     </div>
+
+    <div class="audio-panel">
+      <div>
+        <div class="audio-icon">
+          <svg aria-hidden="false" width="20" height="20" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.99 11C14.99 12.66 13.66 14 12 14C10.34 14 9 12.66 9 11V5C9 3.34 10.34 2 12 2C13.66 2 15 3.34 15 5L14.99 11ZM12 16.1C14.76 16.1 17.3 14 17.3 11H19C19 14.42 16.28 17.24 13 17.72V21H11V17.72C7.72 17.23 5 14.41 5 11H6.7C6.7 14 9.24 16.1 12 16.1ZM12 4C11.2 4 11 4.66667 11 5V11C11 11.3333 11.2 12 12 12C12.8 12 13 11.3333 13 11V5C13 4.66667 12.8 4 12 4Z" fill="currentColor"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M14.99 11C14.99 12.66 13.66 14 12 14C10.34 14 9 12.66 9 11V5C9 3.34 10.34 2 12 2C13.66 2 15 3.34 15 5L14.99 11ZM12 16.1C14.76 16.1 17.3 14 17.3 11H19C19 14.42 16.28 17.24 13 17.72V22H11V17.72C7.72 17.23 5 14.41 5 11H6.7C6.7 14 9.24 16.1 12 16.1Z" fill="currentColor"></path></svg>
+        </div>
+
+        <div class='audio-icon'>
+          <svg aria-hidden="false" width="20" height="20" viewBox="0 0 24 24"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2.00305C6.486 2.00305 2 6.48805 2 12.0031V20.0031C2 21.1071 2.895 22.0031 4 22.0031H6C7.104 22.0031 8 21.1071 8 20.0031V17.0031C8 15.8991 7.104 15.0031 6 15.0031H4V12.0031C4 7.59105 7.589 4.00305 12 4.00305C16.411 4.00305 20 7.59105 20 12.0031V15.0031H18C16.896 15.0031 16 15.8991 16 17.0031V20.0031C16 21.1071 16.896 22.0031 18 22.0031H20C21.104 22.0031 22 21.1071 22 20.0031V12.0031C22 6.48805 17.514 2.00305 12 2.00305Z" fill="currentColor"></path></svg></svg>
+        </div>
+
+        <div @click="exitChannel" class="audio-icon">
+          <svg aria-hidden="false" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M21.1169 1.11603L22.8839 2.88403L19.7679 6.00003L22.8839 9.11603L21.1169 10.884L17.9999 7.76803L14.8839 10.884L13.1169 9.11603L16.2329 6.00003L13.1169 2.88403L14.8839 1.11603L17.9999 4.23203L21.1169 1.11603ZM18 22H13C6.925 22 2 17.075 2 11V6C2 5.447 2.448 5 3 5H7C7.553 5 8 5.447 8 6V10C8 10.553 7.553 11 7 11H6C6.063 14.938 9 18 13 18V17C13 16.447 13.447 16 14 16H18C18.553 16 19 16.447 19 17V21C19 21.553 18.553 22 18 22Z"></path></svg>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -84,6 +98,7 @@ export default {
       textChannel: false,
       message: "",
       currentTextChannel: "",
+      currentVoiceChannel : "",
       currentMessages: [],
       refresher: null,
       allMessages: {},
@@ -91,6 +106,9 @@ export default {
     };
   },
   methods: {
+    getUser() {
+      return this.$store.state.user
+    },
     async apiRequest(method, options) {
       const request = await this.$axios.$post(api, {
         method: method,
@@ -103,10 +121,12 @@ export default {
       switch (channel.type) {
         case 'GUILD_VOICE':
           this.textChannel = false;
+          this.currentVoiceChannel = channel.id
 
           await this.apiRequest("joinChannel", {
             id: channel.id
           })
+
           break
 
         case 'GUILD_TEXT':
@@ -142,6 +162,8 @@ export default {
       await this.apiRequest('exitChannel', {
         guildId: this.guild.id
       })
+
+      this.currentVoiceChannel = ""
     },
     getUserInfo(id) {
       return this.guildUsers[id]

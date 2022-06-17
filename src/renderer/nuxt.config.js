@@ -17,6 +17,8 @@ module.exports = {
   css: ['@/assets/main.css'],
   plugins: [],
   buildModules: [
+    '@nuxtjs/tailwindcss',
+    '@nuxtjs/axios'
   ],
   modules: ['@nuxtjs/axios', '@nuxtjs/markdownit'],
   axios : {},

@@ -56,6 +56,7 @@ export default {
       options: {},
     });
 
+    this.$store.commit('setUser', this.user)
   },
 };
 </script>
