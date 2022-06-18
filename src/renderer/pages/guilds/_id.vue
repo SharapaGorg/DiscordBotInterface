@@ -82,7 +82,7 @@
             class="message"
           >
             <div class="message-header">
-              <div>
+              <div style="display : inline-block">
                 <img alt="" :src="getUserInfo(message['authorId']).displayAvatarURL" class="chat-avatar"/>
 
                 <span class="author">
@@ -94,7 +94,7 @@
                 </span>
               </div>
 
-              <div class="user-id">{{ message['authorId'] }}</div>
+<!--              <div class="user-id">{{ message['authorId'] }}</div>-->
 
               <span class="date">{{ _formatDate(message['createdTimestamp']) }}</span>
 
