@@ -34,7 +34,7 @@ export default {
       },
       guilds: [
         {
-          name: "NAME 1",
+          name: "Loading ...",
           id: 1,
         },
       ],

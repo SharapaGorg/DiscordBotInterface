@@ -53,12 +53,12 @@
               </p>
             </span>
 
+            <span class="date">{{ _formatDate(message['createdTimestamp']) }}</span>
+
             <span
               v-html="$md.render(message.content)"
               class="message-content"
             ></span>
-            <!--            <img :src="'https://cdn.discordapp.com/attachments/' + currentTextChannel +'/' + message.id + '/unknown.png'"/>-->
-            <!--            <span>{{ message }}</span>-->
           </div>
         </div>
       </div>
@@ -74,6 +74,8 @@
 
     <div class="audio-panel">
       <div>
+        <img class="bot-avatar" alt="" :src="getUser().displayAvatarURL"/>
+        <span class="bot-tag">{{ getUser().tag }}</span>
         <div class="audio-icon">
           <svg aria-hidden="false" width="20" height="20" viewBox="0 0 24 24">
             <path fill-rule="evenodd" clip-rule="evenodd"
@@ -188,7 +190,7 @@ export default {
 
       messages = messages.reverse();
 
-      console.log(messages)
+      console.log(messages[0])
 
       this.allMessages[this.currentTextChannel] = messages;
       this.currentMessages = messages;
@@ -200,6 +202,18 @@ export default {
       })
 
       this.message = "";
+    },
+    _formatDate(timestamp) {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+      let date = new Date(timestamp);
+
+      let month = months[date.getMonth()]
+      let day = date.getDate();
+      let hours = date.getHours();
+      let minutes = "0" + date.getMinutes();
+      let seconds = "0" + date.getSeconds();
+
+      return day + ' ' + month + ' | ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
     },
     async _getDiscordObject(method, id) {
       return await this.apiRequest(method, {

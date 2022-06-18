@@ -112,6 +112,12 @@ a {
 }
 
 
+.date {
+  padding : 5px 10px;
+  background: #2f3136;
+  border-radius: 5px;
+}
+
 /*guild */
 
 .actionButton {
@@ -161,6 +167,22 @@ a {
   padding : 7px;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.bot-avatar {
+  border-radius: 100%;
+  width : 25px;
+  height : 25px;
+  display : inline;
+  position: relative;
+  top : 14px;
+}
+
+.bot-tag {
+  color : #caccce;
+  font-weight: 600;
+  position: relative;
+  top : 8px;
 }
 
 .audio-icon:hover {
