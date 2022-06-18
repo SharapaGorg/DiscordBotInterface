@@ -167,6 +167,20 @@ a {
   background : #36393f;
 }
 
+.chat-avatar {
+  width : 35px;
+  height : 35px;
+  border-radius: 100%;
+  position: relative;
+  top : 10px;
+}
+
+.GUILD-CATEGORY {
+  text-align : left;
+  padding : 10px 5px;
+  color : #48F0FE;
+}
+
 .channel {
   cursor: pointer;
   /* color : #dcddde; */
@@ -242,6 +256,7 @@ h2 {
 .message {
 
 }
+
 
 .bot {
   background: #5865F2;
