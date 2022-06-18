@@ -46,7 +46,7 @@
           >
             <span>{{ ban.tag }}</span>
             <span>{{ ban.reason }}</span>
-            <div @click="unBan">Разбанить</div>
+            <div @click="unBan" class="list-button">Разбанить</div>
           </div>
         </div>
 
@@ -54,7 +54,7 @@
           <div class="ban-item">
             <span>Invite code</span>
             <span>Link</span>
-            <div @click="_createInvite">Создать приглашение</div>
+            <div @click="_createInvite" class="list-button">Создать приглашение</div>
           </div>
           <div
             v-for="invite in inviteList"

@@ -311,6 +311,17 @@ h2 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.list-button {
+  border : 1px solid #caccce;
+  width : fit-content;
+  padding : 3px 5px;
+  border-radius: 5px;
+}
+
+.list-button:hover {
+  background : #5865F2;
+}
+
 .messages {
   height: calc(100vh - 115px - 60px);
   width: calc(100% - 382px);
