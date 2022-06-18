@@ -113,6 +113,7 @@ export default {
   data() {
     return {
       channelsList: [],
+      categoriesList: [],
       guild: [],
       textChannel: false,
       message: "",
@@ -122,7 +123,6 @@ export default {
       refresher: null,
       allMessages: {},
       guildUsers: {},
-      upgradedChannelsList : {'1' : '123'}
     };
   },
   methods: {
@@ -130,12 +130,10 @@ export default {
       return this.$store.state.user
     },
     async apiRequest(method, options) {
-      const request = await this.$axios.$post(api, {
+      return await this.$axios.$post(api, {
         method: method,
         options: options
       })
-
-      return request
     },
     async selectChannel(channel) {
       switch (channel.type) {
@@ -177,7 +175,7 @@ export default {
     getUserInfo(id) {
       return this.guildUsers[id]
         ? this.guildUsers[id]
-        : {tag: "ACCESS DENIED # 0000"};
+        : {displayName: "ACCESS DENIED # 0000"};
     },
     async extendMessages() {
       const currentLimit = this.allMessages[this.currentTextChannel].length;
@@ -203,32 +201,27 @@ export default {
 
       this.message = "";
     },
-    async _getUser(id) {
-      return await this.apiRequest("getUser", {
-        id: id
-      })
-    },
-    async _getChannel(id) {
-      return await this.apiRequest("getChannel", {
-        id: id
-      })
-    },
-    async _getGuild(id) {
-      return await this.apiRequest("getServer", {
-        id: id
-      })
-    },
-    async _getChannelsList(id) {
-      return await this.apiRequest("getChannelsList", {
+    async _getDiscordObject(method, id) {
+      return await this.apiRequest(method, {
         guildId: id
       })
     },
-    async _getMembersList(id) {
-      return await this.apiRequest("getMembersList", {
-        guildId : id
-      })
+    async _getGuild(id) {
+      return await this._getDiscordObject("getServer", id);
     },
-    upgradableBubbleSort(arr, value, value2) {
+    async _getChannelsList(id) {
+      return await this._getDiscordObject("getChannelsList", id)
+    },
+    async _getMembersList(id) {
+      return await this._getDiscordObject("getMembersList", id)
+    },
+    async _getCategoriesList(id) {
+      return await this._getDiscordObject("getCategoriesList", id)
+    },
+    _insertAt(array, index, ...elementsArray) {
+      array.splice(index, 0, ...elementsArray)
+    },
+    upgradableBubbleSort(arr, value) {
       for (let i = 0, endI = arr.length - 1; i < endI; i++) {
         for (let j = 0, endJ = endI - i; j < endJ; j++) {
           if (arr[j][value] > arr[j + 1][value]) {
@@ -242,21 +235,40 @@ export default {
     }
   },
   async created() {
-      const guildId = this.$route.params.id
+    const guildId = this.$route.params.id
 
-      // get guild object
-      this.guild = await this._getGuild(guildId)
+    // get guild object
+    this.guild = await this._getGuild(guildId)
 
-      // get all user in current guild
-      const members = await this._getMembersList(guildId)
+    // get all user in current guild
+    const members = await this._getMembersList(guildId)
 
-      for (let member of members) {
-        this.guildUsers[member.userId] = member;
-      }
+    for (let member of members) {
+      this.guildUsers[member.userId] = member;
+    }
 
+    // get categories
+    const categories = await this._getCategoriesList(guildId)
 
-      // get channels
-      this.channelsList = await this._getChannelsList(guildId)
+    // get channels
+    const channels = await this._getChannelsList(guildId)
+
+    this.upgradableBubbleSort(categories, "rawPosition")
+    this.upgradableBubbleSort(channels, 'parentId')
+
+    this.channelsList = categories
+
+    for (let channel of channels) {
+        const categoryId = channel['parentId']
+        let index = 0;
+
+        if (typeof categoryId !== 'undefined') {
+          const category = categories.filter(c => c.id === categoryId)[0]
+          index = categories.indexOf(category) + 1
+        }
+
+        this._insertAt(this.channelsList, index, channel)
+    }
 
 
   }
