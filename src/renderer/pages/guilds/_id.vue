@@ -18,7 +18,7 @@
         :key="channel.id"
         @click="selectChannel(channel)"
       >
-        <p v-html="channel.name + ' [' + channel.type.split('_')[1] + ']'"></p>
+        <p v-html="channel.name"></p>
         <img
           :src="getUser().displayAvatarURL" alt="" class="avatar"
           v-show="currentVoiceChannel === channel.id"
@@ -27,8 +27,45 @@
 
     </div>
     <div>
+      <div class="settings">
+        <div class="header">Guild settings</div>
+        <div class="setting-button" @click="showBanList">Ban list</div>
+        <div class="setting-button" @click="showInviteList">Invite list</div>
+      </div>
+
       <div class="messages" ref="messages">
-        <div ref="content">
+        <div v-show="banList.length > 0">
+            <div class="ban-item">
+              <span>Nickname</span>
+              <span>Reason</span>
+            </div>
+            <div
+              class="ban-item"
+              v-for="ban in banList"
+              :key="ban.id"
+            >
+              <span>{{ ban.tag }}</span>
+              <span>{{ ban.reason }}</span>
+              <div @click="unBan">Разбанить</div>
+            </div>
+        </div>
+
+        <div v-show="inviteList.length > 0">
+          <div class="ban-item">
+            <span>Invite code</span>
+            <span>Link</span>
+          </div>
+          <div
+            v-for="invite in inviteList"
+            :key="invite.id"
+            class="ban-item"
+          >
+            <span>{{ invite.code }}</span>
+            <span>https://discord.com/invite/{{ invite.code }}</span>
+          </div>
+        </div>
+
+        <div ref="content" v-show="!settingsActivated">
           <div
             class="actionButton"
             style="margin-left: auto; margin-right: auto"
@@ -43,20 +80,26 @@
             :key="message.id"
             class="message"
           >
-            <img alt="" :src="getUserInfo(message['authorId']).displayAvatarURL" class="chat-avatar"/>
+            <div class="message-header">
+              <div>
+                <img alt="" :src="getUserInfo(message['authorId']).displayAvatarURL" class="chat-avatar"/>
 
-            <span class="author">
-              [{{ getUserInfo(message['authorId']).displayName }}] :
-              {{ message['authorId'] }}
-              <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">
-                BOT
-              </p>
-            </span>
+                <span class="author">
+                  {{ getUserInfo(message['authorId']).displayName }}
 
-            <span class="date">{{ _formatDate(message['createdTimestamp']) }}</span>
+                  <p class="bot" v-show="getUserInfo(message['authorId'])['bot']">
+                    BOT
+                  </p>
+                </span>
+              </div>
 
+              <div class="user-id">{{ message['authorId'] }}</div>
+
+              <span class="date">{{ _formatDate(message['createdTimestamp']) }}</span>
+
+            </div>
             <span
-              v-html="$md.render(message.content)"
+              v-html="$md.render(message.content ? message.content : '*no-printed-content*')"
               class="message-content"
             ></span>
           </div>
@@ -116,6 +159,8 @@ export default {
     return {
       channelsList: [],
       categoriesList: [],
+      banList : [],
+      inviteList : [],
       guild: [],
       textChannel: false,
       message: "",
@@ -125,6 +170,7 @@ export default {
       refresher: null,
       allMessages: {},
       guildUsers: {},
+      settingsActivated : false,
     };
   },
   methods: {
@@ -138,6 +184,9 @@ export default {
       })
     },
     async selectChannel(channel) {
+      this.resetLists()
+      this.settingsActivated = false
+
       switch (channel.type) {
         case 'GUILD_VOICE':
           this.textChannel = false;
@@ -151,6 +200,7 @@ export default {
 
         case 'GUILD_TEXT':
           this.textChannel = true;
+
           this.currentTextChannel = channel.id;
 
           this.allMessages[channel.id] = []
@@ -220,6 +270,11 @@ export default {
         guildId: id
       })
     },
+    async _getUser(id) {
+      return await this.apiRequest("getUser", {
+        id : id
+      })
+    },
     async _getGuild(id) {
       return await this._getDiscordObject("getServer", id);
     },
@@ -232,8 +287,41 @@ export default {
     async _getCategoriesList(id) {
       return await this._getDiscordObject("getCategoriesList", id)
     },
+    async _getBanList(id) {
+      return await this._getDiscordObject("getBanList", id)
+    },
+    async _getInviteList(id) {
+      return await this._getDiscordObject("getInviteList", id)
+    },
     _insertAt(array, index, ...elementsArray) {
       array.splice(index, 0, ...elementsArray)
+    },
+    resetLists() {
+      this.banList = this.inviteList = []
+    },
+    async showInviteList() {
+      this.resetLists()
+      this.settingsActivated = true;
+
+      this.inviteList = await this._getInviteList(this.$route.params.id)
+      console.log(this.inviteList)
+    },
+    async showBanList() {
+      this.resetLists()
+      this.settingsActivated = true;
+
+      const banList = await this._getBanList(this.$route.params.id)
+
+      for (let ban of banList) {
+        let user = await this._getUser(ban.user)
+
+        ban.tag = user.tag
+      }
+
+      this.banList = banList
+    },
+    async unBan() {
+      //
     },
     upgradableBubbleSort(arr, value) {
       for (let i = 0, endI = arr.length - 1; i < endI; i++) {
@@ -258,7 +346,7 @@ export default {
     const members = await this._getMembersList(guildId)
 
     for (let member of members) {
-      this.guildUsers[member.userId] = member;
+      this.guildUsers[member['userId']] = member;
     }
 
     // get categories
@@ -268,20 +356,20 @@ export default {
     const channels = await this._getChannelsList(guildId)
 
     this.upgradableBubbleSort(categories, "rawPosition")
-    this.upgradableBubbleSort(channels, 'parentId')
 
     this.channelsList = categories
 
+    // link each channel with special category (set each channel` position)
     for (let channel of channels) {
-        const categoryId = channel['parentId']
-        let index = 0;
+      const categoryId = channel['parentId']
+      let index = 0;
 
-        if (typeof categoryId !== 'undefined') {
-          const category = categories.filter(c => c.id === categoryId)[0]
-          index = categories.indexOf(category) + 1
-        }
+      if (typeof categoryId !== 'undefined') {
+        const category = categories.filter(c => c.id === categoryId)[0]
+        index = categories.indexOf(category) + 1
+      }
 
-        this._insertAt(this.channelsList, index, channel)
+      this._insertAt(this.channelsList, index, channel)
     }
 
 

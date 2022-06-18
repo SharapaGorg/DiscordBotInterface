@@ -116,6 +116,10 @@ a {
   padding : 5px 10px;
   background: #2f3136;
   border-radius: 5px;
+  height : 20px;
+  position: relative;
+  top : 15px;
+  width : fit-content;
 }
 
 /*guild */
@@ -195,6 +199,7 @@ a {
   border-radius: 100%;
   position: relative;
   top : 10px;
+  margin-right : 15px;
 }
 
 .GUILD-CATEGORY {
@@ -222,12 +227,22 @@ a {
 
 .author {
   color: #dcddde;
-  font-size: 20px !important;
+}
+
+.user-id {
+  position: relative;
+  top : 18px;
 }
 
 h2 {
   margin: auto !important;
   font-size: 16px !important;
+}
+
+.message-header {
+  display : grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /*justify-items: center;*/
 }
 
 .message-field {
@@ -259,8 +274,45 @@ h2 {
   color: #48F0FE;
 }
 
+.settings {
+  height : 44px;
+  width : 100%;
+  border-bottom: 1px solid #2f3136;
+  padding-top: 15px;
+}
+
+.settings h2 {
+  color : #caccce;
+  display : inline-block;
+}
+
+.settings div {
+  display : inline-block;
+  color : #caccce;
+  font-weight: 600;
+  margin-left : 15px;
+}
+
+.settings .setting-button {
+  border-radius: 5px;
+  background : #5865F2;
+  padding : 5px 10px;
+  cursor: pointer;
+}
+
+.ban-item {
+  color : #caccce;
+  padding : 8px 4px;
+  margin : 5px 0;
+  border-radius: 5px;
+  border: 1px solid #caccce;
+  display : grid;
+  cursor: pointer;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .messages {
-  height: calc(100vh - 115px);
+  height: calc(100vh - 115px - 60px);
   width: calc(100% - 382px);
   overflow-y: scroll;
   overflow-x: auto;
