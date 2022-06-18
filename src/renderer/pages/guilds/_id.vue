@@ -34,26 +34,27 @@
       </div>
 
       <div class="messages" ref="messages">
-        <div v-show="banList.length > 0">
-            <div class="ban-item">
-              <span>Nickname</span>
-              <span>Reason</span>
-            </div>
-            <div
-              class="ban-item"
-              v-for="ban in banList"
-              :key="ban.id"
-            >
-              <span>{{ ban.tag }}</span>
-              <span>{{ ban.reason }}</span>
-              <div @click="unBan">Разбанить</div>
-            </div>
+        <div v-show="settings.ban">
+          <div class="ban-item">
+            <span>Nickname</span>
+            <span>Reason</span>
+          </div>
+          <div
+            class="ban-item"
+            v-for="ban in banList"
+            :key="ban.id"
+          >
+            <span>{{ ban.tag }}</span>
+            <span>{{ ban.reason }}</span>
+            <div @click="unBan">Разбанить</div>
+          </div>
         </div>
 
-        <div v-show="inviteList.length > 0">
+        <div v-show="settings.invite">
           <div class="ban-item">
             <span>Invite code</span>
             <span>Link</span>
+            <div @click="_createInvite">Создать приглашение</div>
           </div>
           <div
             v-for="invite in inviteList"
@@ -159,8 +160,8 @@ export default {
     return {
       channelsList: [],
       categoriesList: [],
-      banList : [],
-      inviteList : [],
+      banList: [],
+      inviteList: [],
       guild: [],
       textChannel: false,
       message: "",
@@ -170,7 +171,8 @@ export default {
       refresher: null,
       allMessages: {},
       guildUsers: {},
-      settingsActivated : false,
+      settingsActivated: false,
+      settings: {}
     };
   },
   methods: {
@@ -184,7 +186,7 @@ export default {
       })
     },
     async selectChannel(channel) {
-      this.resetLists()
+      this.resetSettings()
       this.settingsActivated = false
 
       switch (channel.type) {
@@ -240,8 +242,6 @@ export default {
 
       messages = messages.reverse();
 
-      console.log(messages[0])
-
       this.allMessages[this.currentTextChannel] = messages;
       this.currentMessages = messages;
     },
@@ -272,7 +272,7 @@ export default {
     },
     async _getUser(id) {
       return await this.apiRequest("getUser", {
-        id : id
+        id: id
       })
     },
     async _getGuild(id) {
@@ -293,22 +293,30 @@ export default {
     async _getInviteList(id) {
       return await this._getDiscordObject("getInviteList", id)
     },
+    async _createInvite() {
+      await this.apiRequest("createInvite", {
+        channelId : this.channelsList[0].id
+      })
+    },
     _insertAt(array, index, ...elementsArray) {
       array.splice(index, 0, ...elementsArray)
     },
-    resetLists() {
-      this.banList = this.inviteList = []
+    resetSettings() {
+      this.settings = {}
     },
     async showInviteList() {
-      this.resetLists()
+      this.resetSettings()
       this.settingsActivated = true;
 
+      this.settings.invite = true
+
       this.inviteList = await this._getInviteList(this.$route.params.id)
-      console.log(this.inviteList)
     },
     async showBanList() {
-      this.resetLists()
+      this.resetSettings()
       this.settingsActivated = true;
+
+      this.settings.ban = true
 
       const banList = await this._getBanList(this.$route.params.id)
 
