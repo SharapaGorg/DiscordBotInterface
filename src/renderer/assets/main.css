@@ -150,6 +150,12 @@ a {
   float: left;
 }
 
+.channel-type {
+  position: relative;
+  top : 4px;
+  display : inline;
+}
+
 .audio-panel {
   width: 350px;
   height: 55px;
