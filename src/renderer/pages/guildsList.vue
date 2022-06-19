@@ -14,7 +14,7 @@
         class="guild"
         @click="setGuild(guild.id)"
       >
-        <img :src="guild['iconURL']" />
+        <img :src="iconURL(guild)" />
         <span>{{ guild.name }}</span>
       </div>
     </div>
@@ -44,12 +44,31 @@ export default {
     setGuild(id) {
       this.$router.replace("/guilds/" + id);
     },
+    resolve_img_url (path) {
+      let images = require.context('../assets/', false, /\.png$|\.jpg$|\.svg$/)
+      return images("./"+path)
+    }
+  },
+  computed: {
+    iconURL() {
+      return (guild) => {
+        if (guild.icon) {
+          return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp?size=96`
+        }
+        else {
+          return this.resolve_img_url('discord.png')
+        }
+      }
+    }
   },
   async created() {
     this.guilds = await this.$axios.$post(api, {
-      method: "getServerList",
-      options: {},
+      method: "fetchListClient",
+      options: {
+        method : 'guilds'
+      },
     });
+
 
     this.user = await this.$axios.$post(api, {
       method: "getBotUser",

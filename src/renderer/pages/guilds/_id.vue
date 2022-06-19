@@ -172,7 +172,8 @@ export default {
       allMessages: {},
       guildUsers: {},
       settingsActivated: false,
-      settings: {}
+      settings: {},
+      guildId : ''
     };
   },
   methods: {
@@ -220,7 +221,7 @@ export default {
       }
     },
     async exitChannel() {
-      await this.apiRequest('exitChannel', {
+      await this.apiRequest('exitVoiceChannel', {
         guildId: this.guild.id
       })
 
@@ -265,33 +266,29 @@ export default {
 
       return day + ' ' + month + ' | ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
     },
-    async _getDiscordObject(method, id) {
-      return await this.apiRequest(method, {
-        guildId: id
+    async _getSubjectGuild(id, settlement) {
+      return await this.apiRequest("getSubjectGuild", {
+        guildId : this.guildId,
+        id : id,
+        settlement : settlement,
       })
     },
-    async _getUser(id) {
-      return await this.apiRequest("getUser", {
-        id: id
+    async _getSubjectClient(id, settlement) {
+      return await this.apiRequest("getSubjectClient", {
+        id : id,
+        settlement : settlement
       })
     },
-    async _getGuild(id) {
-      return await this._getDiscordObject("getServer", id);
+    async _getGuildData(id, method) {
+      return await this.apiRequest("fetchListGuild", {
+        guildId : id,
+        method: method
+      })
     },
-    async _getChannelsList(id) {
-      return await this._getDiscordObject("getChannelsList", id)
-    },
-    async _getMembersList(id) {
-      return await this._getDiscordObject("getMembersList", id)
-    },
-    async _getCategoriesList(id) {
-      return await this._getDiscordObject("getCategoriesList", id)
-    },
-    async _getBanList(id) {
-      return await this._getDiscordObject("getBanList", id)
-    },
-    async _getInviteList(id) {
-      return await this._getDiscordObject("getInviteList", id)
+    async _getClientData(method) {
+      return await this.apiRequest("fetchListClient", {
+        method : method
+      })
     },
     async _createInvite() {
       await this.apiRequest("createInvite", {
@@ -310,7 +307,8 @@ export default {
 
       this.settings.invite = true
 
-      this.inviteList = await this._getInviteList(this.$route.params.id)
+      // this.inviteList = await this._getInviteList(this.$route.params.id)
+      this.inviteList = await this._getGuildData(this.$route.params.id, "invites")
     },
     async showBanList() {
       this.resetSettings()
@@ -318,10 +316,13 @@ export default {
 
       this.settings.ban = true
 
-      const banList = await this._getBanList(this.$route.params.id)
+      const banList = await this._getGuildData(this.guildId, "bans")
 
       for (let ban of banList) {
-        let user = await this._getUser(ban.user)
+        let user = await this._getSubjectClient(ban.user, "users")
+
+        console.log(ban.user, "users")
+        console.log(user)
 
         ban.tag = user.tag
       }
@@ -345,23 +346,26 @@ export default {
     }
   },
   async created() {
-    const guildId = this.$route.params.id
+    this.guildId = this.$route.params.id
 
     // get guild object
-    this.guild = await this._getGuild(guildId)
+    this.guild = await this._getSubjectClient(this.guildId, 'guilds')
 
     // get all user in current guild
-    const members = await this._getMembersList(guildId)
+    const members = await this._getGuildData(this.guildId, "members")
 
     for (let member of members) {
       this.guildUsers[member['userId']] = member;
     }
 
-    // get categories
-    const categories = await this._getCategoriesList(guildId)
+    // get all channels
+    const allChannels = await this._getGuildData(this.guildId, "channels")
 
-    // get channels
-    const channels = await this._getChannelsList(guildId)
+    // get categories
+    const categories = allChannels.filter(c => c.type === 'GUILD_CATEGORY')
+
+    // get text | voice | ... channels
+    const channels = allChannels.filter(c => c.type !== 'GUILD_CATEGORY')
 
     this.upgradableBubbleSort(categories, "rawPosition")
 
