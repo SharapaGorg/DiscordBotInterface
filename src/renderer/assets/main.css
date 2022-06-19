@@ -378,6 +378,7 @@ h2 {
   right : 0;
   width : 400px;
   height : calc(100% - 120px);
+  overflow-y : auto;
   background : rgb(47, 49, 54);
   top :60px;
   z-index : 10;
@@ -404,7 +405,6 @@ h2 {
 .cross {
   position: absolute;
   right : 10px;
-  margin-top : 10px;
   width :20px;
   height : 20px;
   cursor: pointer;
@@ -465,3 +465,20 @@ h2 {
   max-height : 300px !important;
 }
 
+.user-avatar {
+  height : 60px;
+  width : 60px;
+  border-radius: 100%;
+}
+
+.user {
+  cursor : pointer;
+  font-size : 18px;
+  text-align : left;
+  font-weight : 600;
+  padding : 5px 25px;
+}
+
+.user:hover {
+  background : rgb(88, 101, 242);
+}

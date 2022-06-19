@@ -1,36 +1,55 @@
 <template>
   <div class="root">
-    <div class="sidebar" v-show="sideBarActivated">
-      <img :src="resolve_img_url('cross.png')" class="cross" @click="sideBarActivated=false"/>
-      <img class="selected-user-avatar" :src="selectedUser.displayAvatarURL"/>
-
-      <div class="selected-user-info">
-        <span class="selected-user-tag">{{ selectedUserGuild.displayName }}</span>
-        <span class="selected-user-tag">{{ selectedUser.tag }}</span>
-        <span class="selected-user-tag">{{ selectedUser.id }}</span>
-      </div>
-
-      <div class="roles">
-        <span class="header">Roles:</span>
-
+    <div class="sidebar">
+      <div class="users-list" v-show="!userBannerActivated">
+        <h3>Members:</h3>
         <div
-          v-for="role in selectedUserGuild.roles"
-          :key="role.id"
-          class="role"
+          class="user"
+          v-for="user in guildUsers"
+          :key="user['userId']"
+          @click="showUserInfo(user['userId'])"
         >
-          <span class="role-name">{{ role.name }}</span>
+          <img :src="user.displayAvatarURL" class="user-avatar"/>
+          {{ user.displayName }}
         </div>
       </div>
 
-      <div class="role-add" @click="showRoles">Добавить роль</div>
-      <div class="roles all-roles" v-show="addingRole">
-        <div
-          class="role"
-          v-for="role in guildRoles"
-          :key="role.id"
-          @click="addRole(selectedUser.id, role.id)"
-        >
-          {{ role.name }}
+      <div class="selected-user" v-show="userBannerActivated">
+        <img
+          class="cross"
+          :src="resolve_img_url('cross.png')"
+          @click="userBannerActivated = false"
+        />
+        <img class="selected-user-avatar" :src="selectedUser.displayAvatarURL"/>
+
+        <div class="selected-user-info">
+          <span class="selected-user-tag">{{ selectedUserGuild.displayName }}</span>
+          <span class="selected-user-tag">{{ selectedUser.tag }}</span>
+          <span class="selected-user-tag">{{ selectedUser.id }}</span>
+        </div>
+
+        <div class="roles">
+          <span class="header">Roles:</span>
+
+          <div
+            v-for="role in selectedUserGuild.roles"
+            :key="role.id"
+            class="role"
+          >
+            <span class="role-name">{{ role.name }}</span>
+          </div>
+        </div>
+
+        <div class="role-add" @click="showRoles">Добавить роль</div>
+        <div class="roles all-roles" v-show="addingRole">
+          <div
+            class="role"
+            v-for="role in guildRoles"
+            :key="role.id"
+            @click="addRole(selectedUser.id, role.id)"
+          >
+            {{ role.name }}
+          </div>
         </div>
       </div>
     </div>
@@ -208,11 +227,11 @@ export default {
       settingsActivated: false,
       settings: {},
       guildId: '',
-      sideBarActivated: false,
       selectedUserGuild: {},
       selectedUser: {},
       guildRoles: [],
-      addingRole : false
+      addingRole : false,
+      userBannerActivated : false
     };
   },
   methods: {
@@ -364,7 +383,7 @@ export default {
       //
     },
     async showUserInfo(id) {
-      this.sideBarActivated = true;
+      this.userBannerActivated = true
 
       this.selectedUserGuild = await this._getSubjectGuild(id, "members", this.guildId)
       this.selectedUser = await this._getSubjectClient(id, "users")
@@ -413,7 +432,7 @@ export default {
   computed: {
     authorInfo() {
       return (message) => {
-        let user = this.guildUsers[message['authorId']]
+        let user = this.guildUsers.find(user => user['userId'] === message['authorId'])
 
         if (!user) {
           user = {
@@ -460,11 +479,9 @@ export default {
     this.guild = await this._getSubjectClient(this.guildId, 'guilds')
 
     // get all user in current guild
-    const members = await this._getGuildData( "members")
+    this.guildUsers = await this._getGuildData( "members")
 
-    for (let member of members) {
-      this.guildUsers[member['userId']] = member;
-    }
+
 
     // get all channels
     const allChannels = await this._getGuildData( "channels")
