@@ -1,5 +1,40 @@
 <template>
   <div class="root">
+    <div class="sidebar" v-show="sideBarActivated">
+      <img :src="resolve_img_url('cross.png')" class="cross" @click="sideBarActivated=false"/>
+      <img class="selected-user-avatar" :src="selectedUser.displayAvatarURL"/>
+
+      <div class="selected-user-info">
+        <span class="selected-user-tag">{{ selectedUserGuild.displayName }}</span>
+        <span class="selected-user-tag">{{ selectedUser.tag }}</span>
+        <span class="selected-user-tag">{{ selectedUser.id }}</span>
+      </div>
+
+      <div class="roles">
+        <span class="header">Roles:</span>
+
+        <div
+          v-for="role in selectedUserGuild.roles"
+          :key="role.id"
+          class="role"
+        >
+          <span class="role-name">{{ role.name }}</span>
+        </div>
+      </div>
+
+      <div class="role-add" @click="showRoles">Добавить роль</div>
+      <div class="roles all-roles" v-show="addingRole">
+        <div
+          class="role"
+          v-for="role in guildRoles"
+          :key="role.id"
+          @click="addRole(selectedUser.id, role.id)"
+        >
+          {{ role.name }}
+        </div>
+      </div>
+    </div>
+
     <div class="channels-list" ref="channels">
       <router-link to="/guildsList">
         <div class="actionButton">
@@ -89,7 +124,7 @@
               <div style="display : inline-block">
                 <img alt="" :src="authorInfo(message).displayAvatarURL" class="chat-avatar"/>
 
-                <span class="author">
+                <span class="author" @click="showUserInfo(message['authorId'])">
                   {{ authorInfo(message).displayName }}
 
                 </span>
@@ -172,7 +207,12 @@ export default {
       guildUsers: {},
       settingsActivated: false,
       settings: {},
-      guildId: ''
+      guildId: '',
+      sideBarActivated: false,
+      selectedUserGuild: {},
+      selectedUser: {},
+      guildRoles: [],
+      addingRole : false
     };
   },
   methods: {
@@ -273,9 +313,9 @@ export default {
         settlement: settlement
       })
     },
-    async _getGuildData(id, method) {
+    async _getGuildData(method) {
       return await this.apiRequest("fetchListGuild", {
-        guildId: id,
+        guildId: this.guildId,
         method: method
       })
     },
@@ -302,7 +342,7 @@ export default {
       this.settings.invite = true
 
       // this.inviteList = await this._getInviteList(this.$route.params.id)
-      this.inviteList = await this._getGuildData(this.$route.params.id, "invites")
+      this.inviteList = await this._getGuildData("invites")
     },
     async showBanList() {
       this.resetSettings()
@@ -310,7 +350,7 @@ export default {
 
       this.settings.ban = true
 
-      const banList = await this._getGuildData(this.guildId, "bans")
+      const banList = await this._getGuildData("bans")
 
       for (let ban of banList) {
         let user = await this._getSubjectClient(ban.user, "users")
@@ -322,6 +362,36 @@ export default {
     },
     async unBan() {
       //
+    },
+    async showUserInfo(id) {
+      this.sideBarActivated = true;
+
+      this.selectedUserGuild = await this._getSubjectGuild(id, "members", this.guildId)
+      this.selectedUser = await this._getSubjectClient(id, "users")
+
+      let roles = []
+
+      for (let roleId of this.selectedUserGuild['roles']) {
+        let role = await this._getSubjectGuild(roleId, "roles")
+        roles.push(role)
+      }
+      this.selectedUserGuild.roles = roles
+    },
+    async showRoles() {
+      this.guildRoles = await this._getGuildData("roles")
+      this.addingRole = true
+    },
+    async addRole(id, roleId) {
+      let resp = await this.apiRequest("addRole", {
+        guildId : this.guildId,
+        roleId : roleId,
+        id : id
+      })
+
+      console.log(resp)
+
+      this.addingRole = false
+      await this.showUserInfo(this.selectedUser.id)
     },
     upgradableBubbleSort(arr, value) {
       for (let i = 0, endI = arr.length - 1; i < endI; i++) {
@@ -359,7 +429,7 @@ export default {
         let content;
         switch (channel.type) {
           case 'GUILD_TEXT':
-            content = `<svg height=20' width='20' viewBox="0 0 24 24"><path fill="#8e9297" fill-rule="evenodd" clip-rule="evenodd" d="M5.88657 21C5.57547 21 5.3399 20.7189 5.39427 20.4126L6.00001 17H2.59511C2.28449 17 2.04905 16.7198 2.10259 16.4138L2.27759 15.4138C2.31946 15.1746 2.52722 15 2.77011 15H6.35001L7.41001 9H4.00511C3.69449 9 3.45905 8.71977 3.51259 8.41381L3.68759 7.41381C3.72946 7.17456 3.93722 7 4.18011 7H7.76001L8.39677 3.41262C8.43914 3.17391 8.64664 3 8.88907 3H9.87344C10.1845 3 10.4201 3.28107 10.3657 3.58738L9.76001 7H15.76L16.3968 3.41262C16.4391 3.17391 16.6466 3 16.8891 3H17.8734C18.1845 3 18.4201 3.28107 18.3657 3.58738L17.76 7H21.1649C21.4755 7 21.711 7.28023 21.6574 7.58619L21.4824 8.58619C21.4406 8.82544 21.2328 9 20.9899 9H17.41L16.35 15H19.7549C20.0655 15 20.301 15.2802 20.2474 15.5862L20.0724 16.5862C20.0306 16.8254 19.8228 17 19.5799 17H16L15.3632 20.5874C15.3209 20.8261 15.1134 21 14.8709 21H13.8866C13.5755 21 13.3399 20.7189 13.3943 20.4126L14 17H8.00001L7.36325 20.5874C7.32088 20.8261 7.11337 21 6.87094 21H5.88657ZM9.41045 9L8.35045 15H14.3504L15.4104 9H9.41045Z"></path></svg>`
+            content = `<svg height='20' width='20' viewBox="0 0 24 24"><path fill="#8e9297" fill-rule="evenodd" clip-rule="evenodd" d="M5.88657 21C5.57547 21 5.3399 20.7189 5.39427 20.4126L6.00001 17H2.59511C2.28449 17 2.04905 16.7198 2.10259 16.4138L2.27759 15.4138C2.31946 15.1746 2.52722 15 2.77011 15H6.35001L7.41001 9H4.00511C3.69449 9 3.45905 8.71977 3.51259 8.41381L3.68759 7.41381C3.72946 7.17456 3.93722 7 4.18011 7H7.76001L8.39677 3.41262C8.43914 3.17391 8.64664 3 8.88907 3H9.87344C10.1845 3 10.4201 3.28107 10.3657 3.58738L9.76001 7H15.76L16.3968 3.41262C16.4391 3.17391 16.6466 3 16.8891 3H17.8734C18.1845 3 18.4201 3.28107 18.3657 3.58738L17.76 7H21.1649C21.4755 7 21.711 7.28023 21.6574 7.58619L21.4824 8.58619C21.4406 8.82544 21.2328 9 20.9899 9H17.41L16.35 15H19.7549C20.0655 15 20.301 15.2802 20.2474 15.5862L20.0724 16.5862C20.0306 16.8254 19.8228 17 19.5799 17H16L15.3632 20.5874C15.3209 20.8261 15.1134 21 14.8709 21H13.8866C13.5755 21 13.3399 20.7189 13.3943 20.4126L14 17H8.00001L7.36325 20.5874C7.32088 20.8261 7.11337 21 6.87094 21H5.88657ZM9.41045 9L8.35045 15H14.3504L15.4104 9H9.41045Z"></path></svg>`
             break
           case 'GUILD_VOICE':
             content = `<svg aria-hidden="false" width="20" height="20" viewBox="0 0 24 24"><path fill="#8e9297" fill-rule="evenodd" clip-rule="evenodd" d="M11.383 3.07904C11.009 2.92504 10.579 3.01004 10.293 3.29604L6 8.00204H3C2.45 8.00204 2 8.45304 2 9.00204V15.002C2 15.552 2.45 16.002 3 16.002H6L10.293 20.71C10.579 20.996 11.009 21.082 11.383 20.927C11.757 20.772 12 20.407 12 20.002V4.00204C12 3.59904 11.757 3.23204 11.383 3.07904ZM14 5.00195V7.00195C16.757 7.00195 19 9.24595 19 12.002C19 14.759 16.757 17.002 14 17.002V19.002C17.86 19.002 21 15.863 21 12.002C21 8.14295 17.86 5.00195 14 5.00195ZM14 9.00195C15.654 9.00195 17 10.349 17 12.002C17 13.657 15.654 15.002 14 15.002V13.002C14.551 13.002 15 12.553 15 12.002C15 11.451 14.551 11.002 14 11.002V9.00195Z" aria-hidden="true"></path></svg>`
@@ -371,12 +441,11 @@ export default {
             break
 
           case 'GUILD_NEWS':
-            content =`<svg width="20" height="20" viewBox="0 0 24 24" fill="#8e9297"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M22.545 4.87988V5.87988H23.28C23.4126 5.87988 23.52 5.98733 23.52 6.11988V10.6399C23.52 10.7724 23.4126 10.8799 23.28 10.8799H17.76C17.6275 10.8799 17.52 10.7724 17.52 10.6399V6.11988C17.52 5.98733 17.6275 5.87988 17.76 5.87988H18.52V4.87988C18.52 3.75988 19.47 2.87988 20.52 2.87988C21.57 2.87988 22.545 3.75988 22.545 4.87988ZM19.52 5.87988H21.52V4.87988C21.52 4.30845 21.0534 3.87988 20.52 3.87988C19.9867 3.87988 19.52 4.30845 19.52 4.87988V5.87988Z"></path><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M4.85 8.26429L15.84 5.84426V10.5599C15.84 11.6202 16.6996 12.4799 17.76 12.4799H21V19.0586H19.1V17.9302L12.7065 16.524L10.36 19.6233C10.1776 19.8633 9.89545 19.9998 9.6 19.9998C9.524 19.9998 9.4461 19.9904 9.3701 19.9725L5.5701 19.0313C5.1464 18.925 4.85 18.5495 4.85 18.1175V8.26429ZM9.2181 17.9942L6.75 17.3824V15.2111L10.6706 16.0751L9.2181 17.9942Z"></path><path d="M3.9 8.25981H2V15.2939H3.9V8.25981Z" fill="currentColor"></path></svg>`
+            content = `<svg width="20" height="20" viewBox="0 0 24 24" fill="#8e9297"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M22.545 4.87988V5.87988H23.28C23.4126 5.87988 23.52 5.98733 23.52 6.11988V10.6399C23.52 10.7724 23.4126 10.8799 23.28 10.8799H17.76C17.6275 10.8799 17.52 10.7724 17.52 10.6399V6.11988C17.52 5.98733 17.6275 5.87988 17.76 5.87988H18.52V4.87988C18.52 3.75988 19.47 2.87988 20.52 2.87988C21.57 2.87988 22.545 3.75988 22.545 4.87988ZM19.52 5.87988H21.52V4.87988C21.52 4.30845 21.0534 3.87988 20.52 3.87988C19.9867 3.87988 19.52 4.30845 19.52 4.87988V5.87988Z"></path><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M4.85 8.26429L15.84 5.84426V10.5599C15.84 11.6202 16.6996 12.4799 17.76 12.4799H21V19.0586H19.1V17.9302L12.7065 16.524L10.36 19.6233C10.1776 19.8633 9.89545 19.9998 9.6 19.9998C9.524 19.9998 9.4461 19.9904 9.3701 19.9725L5.5701 19.0313C5.1464 18.925 4.85 18.5495 4.85 18.1175V8.26429ZM9.2181 17.9942L6.75 17.3824V15.2111L10.6706 16.0751L9.2181 17.9942Z"></path><path d="M3.9 8.25981H2V15.2939H3.9V8.25981Z" fill="currentColor"></path></svg>`
 
             break
 
           default:
-            console.log(channel.type)
             break
         }
 
@@ -391,14 +460,14 @@ export default {
     this.guild = await this._getSubjectClient(this.guildId, 'guilds')
 
     // get all user in current guild
-    const members = await this._getGuildData(this.guildId, "members")
+    const members = await this._getGuildData( "members")
 
     for (let member of members) {
       this.guildUsers[member['userId']] = member;
     }
 
     // get all channels
-    const allChannels = await this._getGuildData(this.guildId, "channels")
+    const allChannels = await this._getGuildData( "channels")
 
     // get categories
     const categories = allChannels.filter(c => c.type === 'GUILD_CATEGORY')

@@ -235,6 +235,11 @@ a {
 
 .author {
   color: #dcddde;
+  cursor: pointer;
+}
+
+.author:hover {
+  text-decoration: underline;
 }
 
 .user-id {
@@ -367,3 +372,96 @@ h2 {
   position: relative;
   top : 6px;
 }
+
+.sidebar {
+  position: fixed;
+  right : 0;
+  width : 400px;
+  height : calc(100% - 120px);
+  background : rgb(47, 49, 54);
+  top :60px;
+  z-index : 10;
+  color : #caccce;
+  text-align: center;
+}
+
+.selected-user-avatar {
+  height : 120px;
+  width : 120px;
+  border-radius: 100%;
+  display : block;
+  margin : 20px auto;
+}
+
+.selected-user-tag {
+  font-size: 20px;
+  font-weight: 600;
+  display : block;
+  margin : 10px auto;
+  text-align : center;
+}
+
+.cross {
+  position: absolute;
+  right : 10px;
+  margin-top : 10px;
+  width :20px;
+  height : 20px;
+  cursor: pointer;
+}
+
+.selected-user-info {
+  padding : 10px 30px;
+  border-radius: 7px;
+  width : fit-content;
+  margin: 0 auto;
+  border : 1px solid #caccce;
+}
+
+.roles {
+  border : 1px solid #caccce;
+  border-radius: 7px;
+  margin : 10px auto;
+  width : 90%;
+  max-height : 150px;
+  overflow-y : auto;
+}
+
+.roles .header {
+  font-size : 19px;
+  font-weight: 600;
+  margin-top : 5px;
+  display : block;
+}
+
+.role {
+  cursor: pointer;
+  padding : 5px 0;
+}
+
+.role:hover {
+  background : rgb(88, 101, 242);
+}
+
+.role-name {
+
+}
+
+.role-add {
+  border : 1px solid #caccce;
+  padding : 5px 10px;
+  border-radius: 7px;
+  width : fit-content;
+  font-weight : 600;
+  cursor: pointer;
+  margin : 0 auto;
+}
+
+.role-add:hover {
+  background : rgb(88, 101, 242);
+}
+
+.all-roles {
+  max-height : 300px !important;
+}
+
