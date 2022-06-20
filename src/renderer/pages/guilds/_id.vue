@@ -74,6 +74,7 @@
       >
 
         <div
+          v-show="channel.type !== 'GUILD_CATEGORY'"
           style="width : 20px;height : 20px;display:inline-block">
           <div class="no-read" v-show="newMessages[channel.id]"></div>
         </div>
@@ -249,8 +250,8 @@ export default {
       selectedUserGuild: {},
       selectedUser: {},
       guildRoles: [],
-      addingRole : false,
-      userBannerActivated : false,
+      addingRole: false,
+      userBannerActivated: false,
       newMessages: {}
     };
   },
@@ -316,17 +317,21 @@ export default {
         limit: currentLimit + 20
       })
 
-      messages = messages.reverse();
+      try {
+        messages = messages.reverse();
 
-      this.allMessages[this.currentTextChannel] = messages;
-      this.currentMessages = messages;
+        this.allMessages[this.currentTextChannel] = messages;
+        this.currentMessages = messages;
 
-      for (let i = this.currentMessages.length - 1; i > -1; i--) {
-        let message = this.currentMessages[i]
+        for (let i = this.currentMessages.length - 1; i > -1; i--) {
+          let message = this.currentMessages[i]
 
-        if (Object.keys(message['attachments']).length > 0) {
-          message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
+          if (Object.keys(message['attachments']).length > 0) {
+            message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
+          }
         }
+      } catch (e) {
+        //
       }
     },
     async sendMessage() {
@@ -364,8 +369,8 @@ export default {
     },
     async _getAttachments(channelId, messageId) {
       return await this.apiRequest("getAttachments", {
-        messageId : messageId,
-        channelId : channelId
+        messageId: messageId,
+        channelId: channelId
       })
     },
     async _getGuildData(method) {
@@ -438,9 +443,9 @@ export default {
     },
     async addRole(id, roleId) {
       let resp = await this.apiRequest("addRole", {
-        guildId : this.guildId,
-        roleId : roleId,
-        id : id
+        guildId: this.guildId,
+        roleId: roleId,
+        id: id
       })
 
       this.addingRole = false
@@ -517,10 +522,10 @@ export default {
     this.guild = await this._getSubjectClient(this.guildId, 'guilds')
 
     // get all user in current guild
-    this.guildUsers = await this._getGuildData( "members")
+    this.guildUsers = await this._getGuildData("members")
 
     // get all channels
-    const allChannels = await this._getGuildData( "channels")
+    const allChannels = await this._getGuildData("channels")
 
     // get categories
     const categories = allChannels.filter(c => c.type === 'GUILD_CATEGORY')
@@ -550,9 +555,9 @@ export default {
     this.refresher = setInterval(async () => {
       let newMessages = await this.apiRequest("newMessages", {})
 
-      for (let message of newMessages){
-          this.$set(this.newMessages, message.channelId, true)
-          console.log(`New message in ${message.channelId} channel!`)
+      for (let message of newMessages) {
+        this.$set(this.newMessages, message.channelId, true)
+        console.log(`New message in ${message.channelId} channel!`)
       }
 
     }, 1000)
