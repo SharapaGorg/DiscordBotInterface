@@ -317,7 +317,6 @@ export default {
         limit: currentLimit + 20
       })
 
-      try {
         messages = messages.reverse();
 
         this.allMessages[this.currentTextChannel] = messages;
@@ -330,9 +329,6 @@ export default {
             message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
           }
         }
-      } catch (e) {
-        //
-      }
     },
     async sendMessage() {
       await this.apiRequest("sendMessage", {
