@@ -66,21 +66,29 @@
         :style="{
           background: currentTextChannel === channel.id ? '#5865F2' : '#2f3136',
           color: currentTextChannel === channel.id ? '#dcddde' : '#8e9297',
-          paddingLeft: channel.type !== 'GUILD_CATEGORY' ? '30px' : '15px',
+          paddingLeft: channel.type !== 'GUILD_CATEGORY' ? '0' : '10px',
         }"
         v-for="channel in channelsList"
         :key="channel.id"
         @click="selectChannel(channel)"
       >
 
+        <div
+          style="width : 20px;height : 20px;display:inline-block">
+          <div class="no-read" v-show="newMessages[channel.id]"></div>
+        </div>
+
         <div v-html="channelTypeIcon(channel)" class="channel-type"></div>
 
-        <p v-html="channel.name"></p>
+        <p v-html="channel.name"></p><br/>
 
-        <img
-          :src="getUser().displayAvatarURL" alt="" class="avatar"
-          v-show="currentVoiceChannel === channel.id"
-        />
+        <div v-show="currentVoiceChannel === channel.id">
+          <img
+            :src="getUser().displayAvatarURL" alt="" class="avatar"
+          />
+
+          <span class="nickname">{{ getUser().username }}</span>
+        </div>
       </div>
 
     </div>
@@ -242,7 +250,8 @@ export default {
       selectedUser: {},
       guildRoles: [],
       addingRole : false,
-      userBannerActivated : false
+      userBannerActivated : false,
+      newMessages: {}
     };
   },
   methods: {
@@ -258,6 +267,8 @@ export default {
     async selectChannel(channel) {
       this.resetSettings()
       this.settingsActivated = false
+
+      this.newMessages[channel.id] = false
 
       switch (channel.type) {
         case 'GUILD_VOICE':
@@ -315,7 +326,6 @@ export default {
 
         if (Object.keys(message['attachments']).length > 0) {
           message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
-          console.log(message.attachments)
         }
       }
     },
@@ -433,8 +443,6 @@ export default {
         id : id
       })
 
-      console.log(resp)
-
       this.addingRole = false
       await this.showUserInfo(this.selectedUser.id)
     },
@@ -498,6 +506,10 @@ export default {
       }
     }
   },
+  destroyed() {
+    console.log('Destroyed')
+    clearInterval(this.refresher)
+  },
   async created() {
     this.guildId = this.$route.params.id
 
@@ -532,6 +544,18 @@ export default {
 
       this._insertAt(this.channelsList, index, channel)
     }
+
+    clearInterval(this.refresher)
+
+    this.refresher = setInterval(async () => {
+      let newMessages = await this.apiRequest("newMessages", {})
+
+      for (let message of newMessages){
+          this.$set(this.newMessages, message.channelId, true)
+          console.log(`New message in ${message.channelId} channel!`)
+      }
+
+    }, 1000)
 
 
   }
