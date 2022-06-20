@@ -302,7 +302,7 @@ export default {
       // get more messages
       let messages = await this.apiRequest('getMessagesFromChannel', {
         id: this.currentTextChannel,
-        limit: currentLimit + 50
+        limit: currentLimit + 20
       })
 
       messages = messages.reverse();
@@ -310,19 +310,12 @@ export default {
       this.allMessages[this.currentTextChannel] = messages;
       this.currentMessages = messages;
 
-
-      // for (let message of this.currentMessages.reverse()) {
-      //     console.log(message)
-      //     if (Object.keys(message['attachments']).length > 0) {
-      //       message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
-      //     }
-      // }
-
       for (let i = this.currentMessages.length - 1; i > -1; i--) {
         let message = this.currentMessages[i]
 
         if (Object.keys(message['attachments']).length > 0) {
           message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
+          console.log(message.attachments)
         }
       }
     },

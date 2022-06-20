@@ -337,11 +337,12 @@ h2 {
 
 .messages {
   height: calc(100vh - 115px - 60px);
-  width: calc(100% - 382px - 400px);
+  width: calc(100% - 382px - 400px + 30px);
   overflow-y: scroll;
   overflow-x: auto;
   color: #48F0FE;
-  padding: 15px 15px 100px;
+  /*padding: 15px 15px 100px;*/
+  padding : 1px 1px 100px;
 }
 
 .message-content {
@@ -352,9 +353,13 @@ h2 {
 }
 
 .message {
+  padding: 15px 15px;
 
 }
 
+.message:hover {
+  background: #2f3136;
+}
 
 .bot {
   background: #5865F2;
