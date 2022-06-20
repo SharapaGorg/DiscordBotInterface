@@ -152,10 +152,21 @@
               <span class="date">{{ _formatDate(message['createdTimestamp']) }}</span>
 
             </div>
+
             <span
               v-html="$md.render(message.content ? message.content : '*no-printed-content*')"
               class="message-content"
-            ></span>
+            >
+            </span>
+
+            <img
+              v-for="attachment in message.attachments"
+              :key="attachment.id"
+              :src="attachment.url"
+              style="max-width: 400px"
+              alt=""
+            />
+
           </div>
         </div>
       </div>
@@ -298,6 +309,22 @@ export default {
 
       this.allMessages[this.currentTextChannel] = messages;
       this.currentMessages = messages;
+
+
+      // for (let message of this.currentMessages.reverse()) {
+      //     console.log(message)
+      //     if (Object.keys(message['attachments']).length > 0) {
+      //       message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
+      //     }
+      // }
+
+      for (let i = this.currentMessages.length - 1; i > -1; i--) {
+        let message = this.currentMessages[i]
+
+        if (Object.keys(message['attachments']).length > 0) {
+          message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
+        }
+      }
     },
     async sendMessage() {
       await this.apiRequest("sendMessage", {
@@ -330,6 +357,12 @@ export default {
       return await this.apiRequest("getSubjectClient", {
         id: id,
         settlement: settlement
+      })
+    },
+    async _getAttachments(channelId, messageId) {
+      return await this.apiRequest("getAttachments", {
+        messageId : messageId,
+        channelId : channelId
       })
     },
     async _getGuildData(method) {
@@ -480,8 +513,6 @@ export default {
 
     // get all user in current guild
     this.guildUsers = await this._getGuildData( "members")
-
-
 
     // get all channels
     const allChannels = await this._getGuildData( "channels")

@@ -259,7 +259,7 @@ h2 {
 }
 
 .message-field {
-  width: calc(100vw - 352px);
+  width: calc(100vw - 352px - 400px);
   height: 60px;
   background: #5865F2;
   position: absolute;
@@ -268,7 +268,7 @@ h2 {
 }
 
 .message-field input {
-  width: calc(100vw - 400px);
+  width: calc(100vw - 400px - 400px);
   height: 40px;
   outline: none;
   margin-left: auto;
@@ -289,7 +289,7 @@ h2 {
 
 .settings {
   height : 44px;
-  width : 100%;
+  width : calc(100% - 400px);
   border-bottom: 1px solid #2f3136;
   padding-top: 15px;
 }
@@ -337,7 +337,7 @@ h2 {
 
 .messages {
   height: calc(100vh - 115px - 60px);
-  width: calc(100% - 382px);
+  width: calc(100% - 382px - 400px);
   overflow-y: scroll;
   overflow-x: auto;
   color: #48F0FE;
@@ -377,10 +377,11 @@ h2 {
   position: fixed;
   right : 0;
   width : 400px;
-  height : calc(100% - 120px);
+  /*height : calc(100% - 120px);*/
+  height : 100%;
   overflow-y : auto;
   background : rgb(47, 49, 54);
-  top :60px;
+  /*top :60px;*/
   z-index : 10;
   color : #caccce;
   text-align: center;
