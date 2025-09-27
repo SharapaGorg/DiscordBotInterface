@@ -27,6 +27,20 @@
 
 > An electron-nuxt project
 
+#### Installation
+
+##### Clone the repository with submodules
+
+This project uses a Git submodule for the Discord interaction backend. Make sure to clone with the `--recursive` flag:
+
+```bash
+# Clone with submodules
+git clone --recursive https://github.com/SharapaGorg/DiscordBotInterface.git
+
+# Or if you already cloned without --recursive:
+git submodule update --init --recursive
+```
+
 #### Build Setup
 
 ``` bash
