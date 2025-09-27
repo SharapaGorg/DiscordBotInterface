@@ -1,0 +1,3 @@
+[submodule "discordInteraction"]
+	path = discordInteraction
+	url = https://github.com/SharapaGorg/DiscordBotInterfaceBackend
