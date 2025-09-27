@@ -23,6 +23,7 @@
 
 <script>
 const api = "http://localhost:4000/api";
+// const api = 'https://shg.radolyn.com/api'
 
 export default {
   name: "guildsList",

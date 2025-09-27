@@ -227,6 +227,7 @@
 
 <script>
 const api = "http://localhost:4000/api";
+// const api = 'https://shg.radolyn.com/api'
 
 export default {
   data() {
@@ -266,13 +267,15 @@ export default {
       })
     },
     async selectChannel(channel) {
+      console.log('SELECT CHANNEL:', channel.type);
+
       this.resetSettings()
       this.settingsActivated = false
 
       this.newMessages[channel.id] = false
 
       switch (channel.type) {
-        case 'GUILD_VOICE':
+        case 2: // deprecated: 'GUILD_VOICE':
           this.textChannel = false;
           this.currentVoiceChannel = channel.id
 
@@ -282,7 +285,7 @@ export default {
 
           break
 
-        case 'GUILD_TEXT':
+        case 0: // deprecated: 'GUILD_TEXT':
           this.textChannel = true;
 
           this.currentTextChannel = channel.id;
@@ -317,18 +320,18 @@ export default {
         limit: currentLimit + 20
       })
 
-        messages = messages.reverse();
+      messages = messages.reverse();
 
-        this.allMessages[this.currentTextChannel] = messages;
-        this.currentMessages = messages;
+      this.allMessages[this.currentTextChannel] = messages;
+      this.currentMessages = messages;
 
-        for (let i = this.currentMessages.length - 1; i > -1; i--) {
-          let message = this.currentMessages[i]
+      for (let i = this.currentMessages.length - 1; i > -1; i--) {
+        let message = this.currentMessages[i]
 
-          if (Object.keys(message['attachments']).length > 0) {
-            message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
-          }
+        if (Object.keys(message['attachments']).length > 0) {
+          message.attachments = await this._getAttachments(this.currentTextChannel, message.id)
         }
+      }
     },
     async sendMessage() {
       await this.apiRequest("sendMessage", {

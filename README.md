@@ -1,5 +1,30 @@
 # discord-bot-interface
 
+
+### Overview
+
+**Functionality:**
+- read/send messages
+- connect/disconnect from voice
+- add/remove roles to the member
+- see ban/invite list
+- see ids of members
+
+**Planned**:
+- connect with discord raid module
+- properly handle errors
+- listen and speak in voice chats
+- fix visual problems
+
+**Login page:**
+![img.png](assets/login.png)
+
+**Guilds/servers list:**
+![img.png](assets/guilds.png)
+
+**Guild content**:
+![img.png](assets/guild.png)
+
 > An electron-nuxt project
 
 #### Build Setup

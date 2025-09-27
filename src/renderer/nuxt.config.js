@@ -21,6 +21,7 @@ module.exports = {
     '@nuxtjs/axios'
   ],
   modules: ['@nuxtjs/axios', '@nuxtjs/markdownit'],
+  // serverMiddleware: ["~/api/index"],
   axios : {},
   markdownit: {
     preset: 'default',
